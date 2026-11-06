@@ -1,0 +1,59 @@
+# --- Données : ne JAMAIS versionner (volumineuses + redistribution interdite) ---
+data/
+*.csv
+*.csv.gz
+*.parquet
+*.feather
+*.pkl
+*.pickle
+*.npy
+*.npz
+*.zip
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.so
+build/
+dist/
+wheels/
+*.egg-info/
+
+# --- Environnements virtuels ---
+.venv/
+venv/
+env/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Outils / caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- MLflow ---
+mlruns/
+mlartifacts/
+
+# --- Modèles entraînés (lourds, régénérables) ---
+models/
+*.pt
+*.pth
+*.ckpt
+*.joblib
+*.txt.model
+
+# --- Streamlit (secrets locaux) ---
+.streamlit/secrets.toml
+
+# --- Variables d'environnement ---
+.env
+
+# --- OS / éditeurs ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
