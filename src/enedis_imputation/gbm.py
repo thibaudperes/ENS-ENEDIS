@@ -87,6 +87,28 @@ class TrainingSet:
     groups: npt.NDArray[np.int64]
 
 
+def training_curves(
+    reservoir: pd.DataFrame, n_curves: int, n_folds: int, seed: int = SEED
+) -> tuple[npt.NDArray[np.str_], npt.NDArray[np.int64], np.random.Generator]:
+    """Tire les courbes d'entraînement du réservoir et leur pli (hors doubles exacts).
+
+    Args:
+        reservoir: Courbes complètes disponibles.
+        n_curves: Nombre de courbes tirées.
+        n_folds: Nombre de plis.
+        seed: Graine aléatoire.
+
+    Returns:
+        ``(courbes, pli de chaque courbe, générateur)`` ; le générateur, dans l'état
+        atteint après le tirage, sert ensuite à l'attribution des motifs.
+    """
+    rng = np.random.default_rng(seed)
+    eligible = reservoir.columns.difference(exact_duplicates(reservoir), sort=False)
+    curves = rng.choice(eligible.to_numpy(), size=n_curves, replace=False)
+    fold_of = rng.permutation(np.arange(n_curves) % n_folds)
+    return curves, fold_of, rng
+
+
 def iter_folds(
     reservoir: pd.DataFrame,
     motifs: npt.NDArray[np.bool_],
@@ -116,10 +138,7 @@ def iter_folds(
     Raises:
         ValueError: Si une courbe du pli se retrouve dans son propre réservoir.
     """
-    rng = np.random.default_rng(seed)
-    eligible = reservoir.columns.difference(exact_duplicates(reservoir), sort=False)
-    curves = rng.choice(eligible.to_numpy(), size=n_curves, replace=False)
-    fold_of = rng.permutation(np.arange(n_curves) % n_folds)
+    curves, fold_of, rng = training_curves(reservoir, n_curves, n_folds, seed)
     n_motifs = motifs.shape[1]
 
     for fold in range(n_folds):

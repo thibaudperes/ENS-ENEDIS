@@ -42,6 +42,9 @@ PALETTE: dict[str, str] = {
     "knn": "#2a78d6",  # bleu
     "knn_naive": "#0840a0",  # bleu marine (KNN naïf, point de départ)
     "model": "#12b886",  # vert (modèle final)
+    "lightgbm": "#784000",  # brun (LightGBM qui corrige le KNN ancré)
+    "network": "#a85484",  # prune (réseaux de neurones)
+    "blend": "#12b886",  # vert : le mélange LightGBM + réseau est le modèle final
     "interval": "#12b886",  # vert, utilisé transparent (intervalle de confiance)
     # Contexte
     "hole": "#e6e5df",  # zones grisées des trous
@@ -67,7 +70,10 @@ _METHOD_KEYS: list[tuple[tuple[str, ...], str]] = [
     (("interp",), "interpolation"),
     (("naïf", "naif", "naive"), "knn_naive"),
     (("knn", "voisin"), "knn"),
-    (("modèle", "model", "final", "lightgbm", "gbm"), "model"),
+    (("mélange", "blend"), "blend"),
+    (("réseau", "tcn", "transformer", "network"), "network"),
+    (("lightgbm", "gbm"), "lightgbm"),
+    (("modèle", "model", "final"), "model"),
 ]
 _EXTRA_COLORS: list[str] = ["#e87ba4", "#eda100", "#6250d6"]
 
@@ -77,6 +83,9 @@ _LINE_WIDTH: dict[str, float] = {
     "knn_naive": 1.6,
     "knn": 1.8,
     "model": 2.4,
+    "lightgbm": 2.0,
+    "network": 1.8,
+    "blend": 2.4,
 }
 
 

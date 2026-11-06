@@ -216,3 +216,48 @@ def build_features(
         cs.append(c_loc + b0)
     table = pd.DataFrame(np.vstack(parts), columns=FEATURES)
     return table, np.concatenate(ts), np.concatenate(cs)
+
+
+def curve_features(
+    X_holed: pd.DataFrame,
+    reservoir: pd.DataFrame,
+    neighbors: Neighbors,
+    names: list[str],
+    predictor: Predictor = BEST_PREDICTOR,
+) -> dict[str, npt.NDArray[np.float32]]:
+    """Calcule des variables à chaque pas de temps (et pas seulement aux points manquants).
+
+    Sert aux modèles qui voient la courbe entière (réseaux de neurones).
+
+    Args:
+        X_holed: Courbes à compléter (temps × courbes), NaN dans les trous.
+        reservoir: Le réservoir utilisé par ``knn.search`` (vérifié).
+        neighbors: Voisines trouvées par ``knn.search`` pour ces courbes.
+        names: Variables voulues, parmi ``FEATURES``.
+        predictor: Configuration du KNN ancré.
+
+    Returns:
+        ``{nom: matrice float32 (temps × courbes)}``.
+
+    Raises:
+        ValueError: Si le réservoir n'est pas celui de la recherche des voisines.
+    """
+    if not reservoir.columns.equals(neighbors.reservoir_columns):
+        raise ValueError("Le réservoir doit être celui utilisé par search().")
+    R = reservoir.to_numpy(dtype=np.float32)
+    X_all = X_holed.to_numpy(dtype=np.float64)
+    parts: dict[str, list[np.ndarray]] = {name: [] for name in names}
+    for b0 in range(0, X_all.shape[1], _BLOCK):
+        b1 = min(b0 + _BLOCK, X_all.shape[1])
+        feats = _block_features(
+            X_all[:, b0:b1],
+            R,
+            X_holed.index,
+            neighbors.index[b0:b1],
+            neighbors.distance[b0:b1],
+            neighbors.weights[:, b0:b1].astype(np.float64),
+            predictor,
+        )
+        for name in names:
+            parts[name].append(np.asarray(feats[name], dtype=np.float32))
+    return {name: np.hstack(blocks) for name, blocks in parts.items()}
