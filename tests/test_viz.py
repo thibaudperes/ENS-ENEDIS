@@ -18,6 +18,7 @@ def test_method_color_by_keyword() -> None:
     assert method_color("KNN (médiane de 5)") == PALETTE["knn"]
     assert method_color("KNN naïf (médiane de 5)") == PALETTE["knn_naive"]
     assert method_color("Modèle final") == PALETTE["model"]
+    assert method_color("LightGBM résidu, 255 feuilles") == PALETTE["model"]
     assert method_color("Vraie courbe") == PALETTE["true"]
     with pytest.raises(KeyError):
         method_color("Méthode inconnue")

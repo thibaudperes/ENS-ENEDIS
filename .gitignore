@@ -60,3 +60,6 @@ models/
 
 # --- Exception : registre des résultats (agrégats, pas de données brutes) ---
 !reports/results.csv
+
+# --- MLflow (base SQLite par défaut de MLflow 3) ---
+mlflow.db

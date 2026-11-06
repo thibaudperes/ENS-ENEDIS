@@ -67,7 +67,7 @@ _METHOD_KEYS: list[tuple[tuple[str, ...], str]] = [
     (("interp",), "interpolation"),
     (("naïf", "naif", "naive"), "knn_naive"),
     (("knn", "voisin"), "knn"),
-    (("modèle", "model", "final"), "model"),
+    (("modèle", "model", "final", "lightgbm", "gbm"), "model"),
 ]
 _EXTRA_COLORS: list[str] = ["#e87ba4", "#eda100", "#6250d6"]
 

@@ -247,7 +247,7 @@ def search(
 # --------------------------------------------------------------------------- prédiction
 
 
-def _scale(Rn: np.ndarray, x: np.ndarray, w: np.ndarray, scaling: Scaling) -> np.ndarray:
+def scale_neighbors(Rn: np.ndarray, x: np.ndarray, w: np.ndarray, scaling: Scaling) -> np.ndarray:
     """Met chaque voisine à l'échelle de la cible sur les points pondérés.
 
     Args:
@@ -280,7 +280,7 @@ def _scale(Rn: np.ndarray, x: np.ndarray, w: np.ndarray, scaling: Scaling) -> np
     return a[None] * Rn + b[None]
 
 
-def _aggregate(Rn: np.ndarray, dist: np.ndarray, aggregate: Aggregate) -> np.ndarray:
+def aggregate_neighbors(Rn: np.ndarray, dist: np.ndarray, aggregate: Aggregate) -> np.ndarray:
     """Combine les K voisines (temps × cibles × K) en une prédiction (temps × cibles)."""
     if aggregate == "median":
         return np.median(Rn, axis=2)
@@ -362,8 +362,8 @@ def predict(
     for b0 in range(0, X.shape[1], _BLOCK):
         b1 = min(b0 + _BLOCK, X.shape[1])
         Rn = R[:, neighbors.index[b0:b1, :k]].astype(np.float64)  # (temps, bloc, K)
-        Rn = _scale(Rn, X[:, b0:b1], neighbors.weights[:, b0:b1], predictor.scaling)
-        pred[:, b0:b1] = _aggregate(Rn, neighbors.distance[b0:b1, :k], predictor.aggregate)
+        Rn = scale_neighbors(Rn, X[:, b0:b1], neighbors.weights[:, b0:b1], predictor.scaling)
+        pred[:, b0:b1] = aggregate_neighbors(Rn, neighbors.distance[b0:b1, :k], predictor.aggregate)
     if predictor.anchor:
         pred = pred + anchor_residual(
             X - pred, mask, predictor.anchor_points, predictor.anchor_decay
