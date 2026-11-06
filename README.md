@@ -13,7 +13,7 @@ Imputer les valeurs manquantes de courbes de charge au pas de 30 minutes, de l'i
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Tests](https://github.com/thibaudperes/ens-challenge-enedis-imputation/actions/workflows/ci.yml/badge.svg)](https://github.com/thibaudperes/ens-challenge-enedis-imputation/actions/workflows/ci.yml)
+[![Tests](https://github.com/thibaudperes/ENS-ENEDIS/actions/workflows/ci.yml/badge.svg)](https://github.com/thibaudperes/ENS-ENEDIS/actions/workflows/ci.yml)
 
 <p align="center"><img src="reports/figures/animation_phare.gif" width="720" alt="Animation : une journée manquante reconstruite"></p>
 <p align="center"><i>Une journée manquante : l'interpolation trace une droite, le modèle final reconstruit la forme avec son intervalle à 90 %.</i></p>
