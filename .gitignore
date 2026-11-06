@@ -57,3 +57,6 @@ models/
 .idea/
 .vscode/
 *.swp
+
+# --- Exception : registre des résultats (agrégats, pas de données brutes) ---
+!reports/results.csv
