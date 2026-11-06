@@ -17,7 +17,9 @@ Trois variantes :
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Literal
 
 import lightgbm as lgb
@@ -319,3 +321,15 @@ def bias_table(pred: npt.ArrayLike, y: npt.ArrayLike, classes: pd.Categorical) -
     table.loc["toutes"] = [df["e"].mean(), df["y"].mean(), df["e"].abs().mean()]
     table["biais (%)"] = table["biais (W)"] / table["vraie moyenne (W)"]
     return table[["biais (W)", "biais (%)", "MAE (W)"]]
+
+
+def save_conformal(model: ConformalModel, path: Path) -> None:
+    """Enregistre un modèle conforme calibré (JSON)."""
+    data = {"kind": model.kind, "quantiles": [[a, c, q] for (a, c), q in model.quantiles.items()]}
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=1))
+
+
+def load_conformal(path: Path) -> ConformalModel:
+    """Relit un modèle conforme enregistré par ``save_conformal``."""
+    data = json.loads(path.read_text())
+    return ConformalModel(data["kind"], {(a, c): q for a, c, q in data["quantiles"]})

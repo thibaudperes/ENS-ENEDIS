@@ -409,6 +409,24 @@ def train_cached(
     return cv, booster, fit_seconds
 
 
+def load_cached_booster(cfg: GBMConfig, n_splits: int = 3) -> lgb.Booster:
+    """Relit un modèle déjà entraîné par ``train_cached``, sans charger ses données.
+
+    Args:
+        cfg: Configuration du modèle.
+        n_splits: Nombre de plis utilisé lors de l'entraînement.
+
+    Returns:
+        Le modèle.
+
+    Raises:
+        FileNotFoundError: Si ce modèle n'a pas encore été entraîné.
+    """
+    ts_key = TRAIN_CACHE.with_suffix(".json").read_text()
+    key = hashlib.md5(json.dumps([config_dict(cfg), ts_key, n_splits]).encode()).hexdigest()[:12]
+    return lgb.Booster(model_file=str(MODEL_DIR / f"{key}.txt"))
+
+
 def make_method(
     booster: lgb.Booster,
     cfg: GBMConfig,
