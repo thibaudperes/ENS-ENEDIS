@@ -40,6 +40,7 @@ PALETTE: dict[str, str] = {
     "true": "#2f2f2c",  # vraie courbe : gris foncé
     "interpolation": "#d9480f",  # orange
     "knn": "#2a78d6",  # bleu
+    "knn_naive": "#0840a0",  # bleu marine (KNN naïf, point de départ)
     "model": "#12b886",  # vert (modèle final)
     "interval": "#12b886",  # vert, utilisé transparent (intervalle de confiance)
     # Contexte
@@ -64,12 +65,19 @@ INTERVAL_ALPHA: float = 0.22
 _METHOD_KEYS: list[tuple[tuple[str, ...], str]] = [
     (("vrai", "true", "réel"), "true"),
     (("interp",), "interpolation"),
+    (("naïf", "naif", "naive"), "knn_naive"),
     (("knn", "voisin"), "knn"),
     (("modèle", "model", "final"), "model"),
 ]
 _EXTRA_COLORS: list[str] = ["#e87ba4", "#eda100", "#6250d6"]
 
-_LINE_WIDTH: dict[str, float] = {"true": 1.3, "interpolation": 1.8, "knn": 1.8, "model": 2.4}
+_LINE_WIDTH: dict[str, float] = {
+    "true": 1.3,
+    "interpolation": 1.8,
+    "knn_naive": 1.6,
+    "knn": 1.8,
+    "model": 2.4,
+}
 
 
 def method_color(name: str) -> str:

@@ -24,7 +24,7 @@ import json
 import subprocess
 import time
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 
 import numpy as np
@@ -80,8 +80,11 @@ class EvalResult:
         mae: MAE globale (W).
         ci: Intervalle de confiance à 95 % de la MAE globale (bootstrap sur les courbes).
         by_class: MAE, bornes de l'intervalle et nombre de points, par classe de longueur.
-        seconds: Temps de calcul de la méthode.
+        seconds: Temps de calcul de la méthode (préparation partagée comprise).
         n_curves: Nombre de courbes évaluées.
+        curve_sums: Sommes d'erreurs absolues (courbes × classes), pour les comparaisons
+            appariées.
+        curve_counts: Effectifs correspondants.
     """
 
     method: str
@@ -91,6 +94,8 @@ class EvalResult:
     by_class: pd.DataFrame
     seconds: float
     n_curves: int
+    curve_sums: npt.NDArray[np.float64] = field(repr=False, default_factory=lambda: np.empty(0))
+    curve_counts: npt.NDArray[np.int64] = field(repr=False, default_factory=lambda: np.empty(0))
 
     def to_row(self) -> dict[str, object]:
         """Ligne du registre des résultats."""
@@ -341,6 +346,7 @@ def evaluate(
     name: str | None = None,
     allow_holdout: bool = False,
     register: bool = True,
+    setup_seconds: float = 0.0,
 ) -> EvalResult:
     """Évalue une méthode sur un jeu : MAE globale, MAE par classe de trou, temps de calcul.
 
@@ -350,6 +356,8 @@ def evaluate(
         name: Nom de la méthode dans le registre (par défaut, ``method.__name__``).
         allow_holdout: Doit être vrai pour évaluer sur ``holdout``, réservé au score final.
         register: Si vrai, ajoute une ligne au registre ``reports/results.csv``.
+        setup_seconds: Temps d'un précalcul partagé entre variantes (par ex. la recherche
+            des voisins, faite une fois puis réutilisée), ajouté au temps mesuré.
 
     Returns:
         Le résultat de l'évaluation.
@@ -365,7 +373,7 @@ def evaluate(
 
     start = time.perf_counter()
     pred = method(split.X_holed.copy(), split.reservoir)
-    seconds = time.perf_counter() - start
+    seconds = time.perf_counter() - start + setup_seconds
     if not (pred.columns.equals(split.X_holed.columns) and pred.index.equals(split.X_holed.index)):
         raise ValueError("La méthode doit renvoyer les mêmes colonnes et le même index.")
 
@@ -388,10 +396,52 @@ def evaluate(
         by_class=by_class,
         seconds=seconds,
         n_curves=int((counts.sum(axis=1) > 0).sum()),
+        curve_sums=sums,
+        curve_counts=counts,
     )
     if register:
         append_to_registry(result)
     return result
+
+
+def paired_difference(
+    a: EvalResult, b: EvalResult, n_boot: int = N_BOOT, seed: int = SEED
+) -> pd.DataFrame:
+    """Différence de MAE (a − b) avec IC à 95 %, par bootstrap apparié sur les courbes.
+
+    Les deux méthodes sont évaluées sur les mêmes courbes : on rééchantillonne les courbes
+    une seule fois pour les deux, ce qui neutralise la variabilité entre clients et donne
+    un intervalle bien plus étroit que la comparaison de deux IC séparés.
+
+    Args:
+        a: Première évaluation.
+        b: Seconde évaluation, sur le même jeu.
+        n_boot: Nombre de tirages.
+        seed: Graine aléatoire.
+
+    Returns:
+        Tableau indexé par classe (+ « toutes ») : différence, IC bas, IC haut.
+
+    Raises:
+        ValueError: Si les deux évaluations ne portent pas sur les mêmes points.
+    """
+    if a.split != b.split or not np.array_equal(a.curve_counts, b.curve_counts):
+        raise ValueError("Comparaison appariée impossible : jeux ou points différents.")
+    rng = np.random.default_rng(seed)
+    S_a = np.column_stack([a.curve_sums, a.curve_sums.sum(axis=1)])
+    S_b = np.column_stack([b.curve_sums, b.curve_sums.sum(axis=1)])
+    N = np.column_stack([a.curve_counts, a.curve_counts.sum(axis=1)])
+    draws = rng.integers(0, len(N), size=(n_boot, len(N)))
+    with np.errstate(invalid="ignore", divide="ignore"):
+        diff = (S_a[draws].sum(axis=1) - S_b[draws].sum(axis=1)) / N[draws].sum(axis=1)
+        point = (S_a.sum(axis=0) - S_b.sum(axis=0)) / N.sum(axis=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        low, high = np.nanpercentile(diff, [2.5, 97.5], axis=0)
+    return pd.DataFrame(
+        {"différence": point, "IC bas": low, "IC haut": high},
+        index=pd.Index([*LENGTH_LABELS, "toutes"], name="classe"),
+    )
 
 
 # --------------------------------------------------------------------------- registre
